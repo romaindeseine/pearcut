@@ -1,0 +1,25 @@
+# Binaires
+/choixpeau
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+*.out
+go.work
+go.work.sum
