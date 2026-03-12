@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -21,9 +22,14 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", healthHandler)
 
-	log.Println("listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	slog.Info("🚀 starting server", "addr", ":8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		slog.Error("❌ server failed", "error", err)
+		os.Exit(1)
+	}
 }
