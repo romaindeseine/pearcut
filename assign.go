@@ -1,45 +1,11 @@
-package main
+package choixpeau
 
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 )
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
-}
-
-type HealthResponse struct {
-	Status string `json:"status"`
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
-}
-
-type Server struct {
-	Addr   string
-	store  Store
-	engine Engine
-}
-
-func newServer(addr string, store Store) *Server {
-	return &Server{
-		Addr:   addr,
-		store:  store,
-		engine: NewEngine(store),
-	}
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
 
 type assignResponse struct {
 	Experiment string `json:"experiment"`
@@ -116,51 +82,4 @@ func (s *Server) bulkAssignHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, bulkAssignResponse{UserID: req.UserID, Assignments: result})
-}
-
-func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
-
-	addr := fmt.Sprintf(":%s", os.Getenv("PORT"))
-	if addr == ":" {
-		addr = ":8080"
-		slog.Warn("⚠️ PORT not set, using default", "port", "8080")
-	}
-
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "choixpeau.db"
-	}
-
-	store, err := NewSQLiteStore(dbPath)
-	if err != nil {
-		slog.Error("❌ failed to open database", "path", dbPath, "error", err)
-		os.Exit(1)
-	}
-	slog.Info("✅ connected to database", "path", dbPath)
-
-	cached, err := NewCachedStore(store)
-	if err != nil {
-		slog.Error("❌ failed to initialize cache", "error", err)
-		os.Exit(1)
-	}
-
-	server := newServer(addr, cached)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /api/v1/assign", server.assignHandler)
-	mux.HandleFunc("POST /api/v1/assign/bulk", server.bulkAssignHandler)
-
-	mux.HandleFunc("GET /admin/v1/experiments", server.listExperiments)
-	mux.HandleFunc("GET /admin/v1/experiments/{slug}", server.getExperiment)
-	mux.HandleFunc("POST /admin/v1/experiments", server.createExperiment)
-	mux.HandleFunc("PUT /admin/v1/experiments/{slug}", server.updateExperiment)
-	mux.HandleFunc("DELETE /admin/v1/experiments/{slug}", server.deleteExperiment)
-
-	slog.Info("🚀 starting server", "addr", server.Addr)
-	if err := http.ListenAndServe(server.Addr, mux); err != nil {
-		slog.Error("❌ server failed", "error", err)
-		os.Exit(1)
-	}
 }
