@@ -195,6 +195,82 @@ func TestEngineAssignDistribution(t *testing.T) {
 	}
 }
 
+func TestEngineBulkAssign(t *testing.T) {
+	allExps := []Experiment{
+		{Slug: "running-1", Seed: "running-1", Status: StatusRunning, Variants: []Variant{{Name: "control", Weight: 50}, {Name: "treatment", Weight: 50}}},
+		{Slug: "running-2", Seed: "running-2", Status: StatusRunning, Variants: []Variant{{Name: "a", Weight: 100}}},
+		{Slug: "draft-exp", Seed: "draft-exp", Status: StatusDraft, Variants: []Variant{{Name: "control", Weight: 100}}},
+		{Slug: "paused-exp", Seed: "paused-exp", Status: StatusPaused, Variants: []Variant{{Name: "control", Weight: 100}}},
+	}
+
+	tests := []struct {
+		name      string
+		exps      []Experiment
+		slugs     []string
+		wantCount int
+		wantSlugs []string
+	}{
+		{
+			name:      "all running experiments",
+			exps:      allExps,
+			slugs:     nil,
+			wantCount: 2,
+			wantSlugs: []string{"running-1", "running-2"},
+		},
+		{
+			name:      "specific running experiments",
+			exps:      allExps,
+			slugs:     []string{"running-1"},
+			wantCount: 1,
+			wantSlugs: []string{"running-1"},
+		},
+		{
+			name:      "non-running experiments filtered out",
+			exps:      allExps,
+			slugs:     []string{"running-1", "draft-exp", "paused-exp"},
+			wantCount: 1,
+			wantSlugs: []string{"running-1"},
+		},
+		{
+			name:      "unknown experiment ignored",
+			exps:      allExps,
+			slugs:     []string{"unknown", "running-2"},
+			wantCount: 1,
+			wantSlugs: []string{"running-2"},
+		},
+		{
+			name:      "no running experiments",
+			exps:      []Experiment{{Slug: "draft", Seed: "draft", Status: StatusDraft, Variants: []Variant{{Name: "c", Weight: 100}}}},
+			slugs:     nil,
+			wantCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newTestStore(t, tt.exps)
+			e := NewEngine(store)
+			assignments, err := e.BulkAssign("user-1", tt.slugs)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(assignments) != tt.wantCount {
+				t.Fatalf("got %d assignments, want %d", len(assignments), tt.wantCount)
+			}
+
+			for i, slug := range tt.wantSlugs {
+				if assignments[i].Experiment != slug {
+					t.Errorf("assignment[%d].Experiment = %q, want %q", i, assignments[i].Experiment, slug)
+				}
+				if assignments[i].UserID != "user-1" {
+					t.Errorf("assignment[%d].UserID = %q, want %q", i, assignments[i].UserID, "user-1")
+				}
+			}
+		})
+	}
+}
+
 func TestEngineAssignSeedOverride(t *testing.T) {
 	baseExp := Experiment{
 		Slug:     "seed-exp",

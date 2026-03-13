@@ -55,4 +55,5 @@ type Store interface {
 
 type Engine interface {
 	Assign(experimentSlug string, userID string) (Assignment, error)
+	BulkAssign(userID string, experimentSlugs []string) ([]Assignment, error)
 }
