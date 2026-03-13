@@ -71,6 +71,38 @@ func (s *Server) assignHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, assignment)
 }
 
+type bulkAssignRequest struct {
+	UserID      string   `json:"user_id"`
+	Experiments []string `json:"experiments,omitempty"`
+}
+
+type bulkAssignResponse struct {
+	UserID      string       `json:"user_id"`
+	Assignments []Assignment `json:"assignments"`
+}
+
+func (s *Server) bulkAssignHandler(w http.ResponseWriter, r *http.Request) {
+	var req bulkAssignRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "invalid json body"})
+		return
+	}
+
+	if req.UserID == "" {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "missing required field: user_id"})
+		return
+	}
+
+	assignments, err := s.engine.BulkAssign(req.UserID, req.Experiments)
+	if err != nil {
+		slog.Error("bulk assignment failed", "user_id", req.UserID, "error", err)
+		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "internal server error"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, bulkAssignResponse{UserID: req.UserID, Assignments: assignments})
+}
+
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
@@ -103,6 +135,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /api/v1/assign", server.assignHandler)
+	mux.HandleFunc("POST /api/v1/assign/bulk", server.bulkAssignHandler)
 
 	mux.HandleFunc("GET /admin/v1/experiments", server.listExperiments)
 	mux.HandleFunc("GET /admin/v1/experiments/{slug}", server.getExperiment)
