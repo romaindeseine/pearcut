@@ -1,10 +1,6 @@
 package main
 
-import (
-	"os"
-	"path/filepath"
-	"testing"
-)
+import "testing"
 
 func validExperiment() Experiment {
 	return Experiment{
@@ -243,130 +239,49 @@ func TestValidateOverrides(t *testing.T) {
 	}
 }
 
-func TestValidateUniqueSlugs(t *testing.T) {
+func TestExperimentValidate(t *testing.T) {
 	tests := []struct {
 		name    string
-		exps    []Experiment
+		exp     Experiment
 		wantErr bool
 	}{
 		{
-			name: "unique slugs",
-			exps: []Experiment{
-				{Slug: "exp-1"},
-				{Slug: "exp-2"},
-			},
+			name: "valid experiment",
+			exp:  validExperiment(),
 		},
 		{
-			name: "duplicate slugs",
-			exps: []Experiment{
-				{Slug: "exp-1"},
-				{Slug: "exp-1"},
-			},
+			name:    "empty slug",
+			exp:     Experiment{Status: StatusRunning, Variants: []Variant{{Name: "a", Weight: 1}}},
 			wantErr: true,
 		},
 		{
-			name: "single experiment",
-			exps: []Experiment{{Slug: "exp-1"}},
-		},
-		{
-			name: "empty list",
-			exps: []Experiment{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateUniqueSlugs(tt.exps)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateUniqueSlugs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestLoadExperiments(t *testing.T) {
-	tests := []struct {
-		name    string
-		yaml    string
-		wantLen int
-		wantErr bool
-	}{
-		{
-			name: "valid config",
-			yaml: `experiments:
-  - slug: checkout-redesign
-    status: running
-    variants:
-      - name: control
-        weight: 50
-      - name: new_checkout
-        weight: 50
-`,
-			wantLen: 1,
-		},
-		{
-			name: "seed defaults to slug",
-			yaml: `experiments:
-  - slug: my-exp
-    status: draft
-    variants:
-      - name: a
-        weight: 1
-`,
-			wantLen: 1,
-		},
-		{
-			name: "explicit seed preserved",
-			yaml: `experiments:
-  - slug: my-exp
-    status: draft
-    seed: custom-seed
-    variants:
-      - name: a
-        weight: 1
-`,
-			wantLen: 1,
-		},
-		{
-			name:    "invalid yaml",
-			yaml:    `not: [valid: yaml`,
+			name:    "invalid status",
+			exp:     Experiment{Slug: "test", Status: "bad", Variants: []Variant{{Name: "a", Weight: 1}}},
 			wantErr: true,
 		},
 		{
-			name: "validation error propagated",
-			yaml: `experiments:
-  - slug: ""
-    status: running
-    variants:
-      - name: a
-        weight: 1
-`,
+			name:    "no variants",
+			exp:     Experiment{Slug: "test", Status: StatusRunning},
+			wantErr: true,
+		},
+		{
+			name: "invalid override",
+			exp: Experiment{
+				Slug:      "test",
+				Status:    StatusRunning,
+				Variants:  []Variant{{Name: "a", Weight: 1}},
+				Overrides: map[string]string{"u1": "nonexistent"},
+			},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dir := t.TempDir()
-			path := filepath.Join(dir, "experiments.yaml")
-			if err := os.WriteFile(path, []byte(tt.yaml), 0644); err != nil {
-				t.Fatal(err)
-			}
-
-			exps, err := loadExperiments(path)
+			err := tt.exp.Validate()
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("loadExperiments() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !tt.wantErr && len(exps) != tt.wantLen {
-				t.Errorf("loadExperiments() returned %d experiments, want %d", len(exps), tt.wantLen)
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
-	}
-}
-
-func TestLoadExperimentsMissingFile(t *testing.T) {
-	_, err := loadExperiments("/nonexistent/path.yaml")
-	if err == nil {
-		t.Fatal("expected error for missing file")
 	}
 }

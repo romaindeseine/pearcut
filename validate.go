@@ -1,40 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"os"
-
-	"gopkg.in/yaml.v3"
-)
-
-type configFile struct {
-	Experiments []Experiment `yaml:"experiments"`
-}
-
-func loadExperiments(path string) ([]Experiment, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("open config: %w", err)
-	}
-	defer f.Close()
-
-	var cfg configFile
-	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("decode config: %w", err)
-	}
-
-	if err := validateExperiments(cfg.Experiments); err != nil {
-		return nil, err
-	}
-
-	for i := range cfg.Experiments {
-		if cfg.Experiments[i].Seed == "" {
-			cfg.Experiments[i].Seed = cfg.Experiments[i].Slug
-		}
-	}
-
-	return cfg.Experiments, nil
-}
+import "fmt"
 
 func validateSlug(exp Experiment) error {
 	if exp.Slug == "" {
@@ -113,38 +79,6 @@ func validateVariants(exp Experiment) error {
 	}
 	if err := validateUniqueVariants(exp); err != nil {
 		return err
-	}
-	return nil
-}
-
-func validateUniqueSlugs(exps []Experiment) error {
-	slugs := make(map[string]bool, len(exps))
-	for _, exp := range exps {
-		if slugs[exp.Slug] {
-			return fmt.Errorf("duplicate experiment slug %q", exp.Slug)
-		}
-		slugs[exp.Slug] = true
-	}
-	return nil
-}
-
-func validateExperiments(exps []Experiment) error {
-	if err := validateUniqueSlugs(exps); err != nil {
-		return err
-	}
-	for _, exp := range exps {
-		if err := validateSlug(exp); err != nil {
-			return err
-		}
-		if err := validateStatus(exp); err != nil {
-			return err
-		}
-		if err := validateVariants(exp); err != nil {
-			return err
-		}
-		if err := validateOverrides(exp); err != nil {
-			return err
-		}
 	}
 	return nil
 }
