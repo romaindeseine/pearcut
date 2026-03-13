@@ -36,7 +36,8 @@ Minimalist A/B cohort assignment API, written in Go.
 
 Flat layout — all Go files at the root in `package main`, one file per responsibility:
 
-- `main.go` — entrypoint, HTTP server, handlers
+- `main.go` — entrypoint, HTTP server, route registration
+- `admin.go` — admin handlers (CRUD experiments under `/admin/v1`)
 - `model.go` — domain structs (Experiment, Variant, Assignment), Store interfaces (ReadStore, WriteStore, Store), Engine interface
 - `errors.go` — sentinel errors
 - `sqlite_store.go` — SQLite-backed Store implementation

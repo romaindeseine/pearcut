@@ -104,6 +104,12 @@ func main() {
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /api/v1/assign", server.assignHandler)
 
+	mux.HandleFunc("GET /admin/v1/experiments", server.listExperiments)
+	mux.HandleFunc("GET /admin/v1/experiments/{slug}", server.getExperiment)
+	mux.HandleFunc("POST /admin/v1/experiments", server.createExperiment)
+	mux.HandleFunc("PUT /admin/v1/experiments/{slug}", server.updateExperiment)
+	mux.HandleFunc("DELETE /admin/v1/experiments/{slug}", server.deleteExperiment)
+
 	slog.Info("🚀 starting server", "addr", server.Addr)
 	if err := http.ListenAndServe(server.Addr, mux); err != nil {
 		slog.Error("❌ server failed", "error", err)
