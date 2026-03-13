@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -227,9 +228,9 @@ func TestCreateExperiment(t *testing.T) {
 		},
 		{
 			name:       "validation error",
-			body:       `{"slug":"","status":"draft","variants":[]}`,
-			store:      &mockStore{experiments: make(map[string]Experiment), createErr: ErrExperimentExists},
-			wantStatus: http.StatusConflict,
+			body:       `{"slug":"new-exp","status":"draft","variants":[]}`,
+			store:      &mockStore{experiments: make(map[string]Experiment), createErr: fmt.Errorf("experiment \"new-exp\" has no variants")},
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -290,6 +291,18 @@ func TestUpdateExperiment(t *testing.T) {
 			store: &mockStore{experiments: map[string]Experiment{
 				"exp-a": {Slug: "exp-a", Status: StatusDraft},
 			}},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name: "validation error",
+			slug: "exp-a",
+			body: `{"status":"running","variants":[]}`,
+			store: &mockStore{
+				experiments: map[string]Experiment{
+					"exp-a": {Slug: "exp-a", Status: StatusDraft},
+				},
+				updateErr: fmt.Errorf("experiment \"exp-a\" has no variants"),
+			},
 			wantStatus: http.StatusBadRequest,
 		},
 	}
