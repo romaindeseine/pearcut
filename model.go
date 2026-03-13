@@ -37,22 +37,6 @@ type ExperimentFilter struct {
 	Slugs  []string
 }
 
-func (e Experiment) Validate() error {
-	if err := validateSlug(e); err != nil {
-		return err
-	}
-	if err := validateStatus(e); err != nil {
-		return err
-	}
-	if err := validateVariants(e); err != nil {
-		return err
-	}
-	if err := validateOverrides(e); err != nil {
-		return err
-	}
-	return nil
-}
-
 type ReadStore interface {
 	Get(slug string) (Experiment, error)
 	List(filter ExperimentFilter) ([]Experiment, error)

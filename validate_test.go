@@ -2,106 +2,66 @@ package main
 
 import "testing"
 
-func validExperiment() Experiment {
-	return Experiment{
-		Slug:   "test-exp",
-		Status: StatusRunning,
-		Variants: []Variant{
-			{Name: "control", Weight: 50},
-			{Name: "treatment", Weight: 50},
-		},
-	}
-}
-
-func TestValidateSlug(t *testing.T) {
+func TestExperimentValidate(t *testing.T) {
 	tests := []struct {
 		name    string
 		exp     Experiment
 		wantErr bool
 	}{
 		{
-			name: "valid slug",
-			exp:  validExperiment(),
+			name: "valid experiment",
+			exp: Experiment{
+				Slug:   "test-exp",
+				Status: StatusRunning,
+				Variants: []Variant{
+					{Name: "control", Weight: 50},
+					{Name: "treatment", Weight: 50},
+				},
+			},
 		},
 		{
 			name:    "empty slug",
-			exp:     Experiment{Slug: "", Status: StatusRunning, Variants: []Variant{{Name: "a", Weight: 1}}},
+			exp:     Experiment{Status: StatusRunning, Variants: []Variant{{Name: "a", Weight: 1}}},
 			wantErr: true,
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateSlug(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateSlug() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateStatus(t *testing.T) {
-	tests := []struct {
-		name    string
-		status  ExperimentStatus
-		wantErr bool
-	}{
-		{"draft", StatusDraft, false},
-		{"running", StatusRunning, false},
-		{"paused", StatusPaused, false},
-		{"stopped", StatusStopped, false},
-		{"invalid", ExperimentStatus("invalid"), true},
-		{"empty", ExperimentStatus(""), true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			exp := validExperiment()
-			exp.Status = tt.status
-			err := validateStatus(exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateStatus() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateVariantsNotEmpty(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
 		{
-			name: "has variants",
-			exp:  validExperiment(),
+			name:    "invalid status",
+			exp:     Experiment{Slug: "test", Status: "bad", Variants: []Variant{{Name: "a", Weight: 1}}},
+			wantErr: true,
+		},
+		{
+			name:    "empty status",
+			exp:     Experiment{Slug: "test", Status: "", Variants: []Variant{{Name: "a", Weight: 1}}},
+			wantErr: true,
+		},
+		{
+			name: "valid draft status",
+			exp: Experiment{
+				Slug:     "test",
+				Status:   StatusDraft,
+				Variants: []Variant{{Name: "a", Weight: 1}},
+			},
+		},
+		{
+			name: "valid paused status",
+			exp: Experiment{
+				Slug:     "test",
+				Status:   StatusPaused,
+				Variants: []Variant{{Name: "a", Weight: 1}},
+			},
+		},
+		{
+			name: "valid stopped status",
+			exp: Experiment{
+				Slug:     "test",
+				Status:   StatusStopped,
+				Variants: []Variant{{Name: "a", Weight: 1}},
+			},
 		},
 		{
 			name:    "no variants",
-			exp:     Experiment{Slug: "test", Status: StatusRunning, Variants: nil},
+			exp:     Experiment{Slug: "test", Status: StatusRunning},
 			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateVariantsNotEmpty(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateVariantsNotEmpty() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateVariantName(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
-		{
-			name: "valid names",
-			exp:  validExperiment(),
 		},
 		{
 			name: "empty variant name",
@@ -111,28 +71,6 @@ func TestValidateVariantName(t *testing.T) {
 				Variants: []Variant{{Name: "", Weight: 50}},
 			},
 			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateVariantName(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateVariantName() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateVariantWeight(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
-		{
-			name: "positive weights",
-			exp:  validExperiment(),
 		},
 		{
 			name: "zero weight",
@@ -152,28 +90,6 @@ func TestValidateVariantWeight(t *testing.T) {
 			},
 			wantErr: true,
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateVariantWeight(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateVariantWeight() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateUniqueVariants(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
-		{
-			name: "unique variants",
-			exp:  validExperiment(),
-		},
 		{
 			name: "duplicate variant names",
 			exp: Experiment{
@@ -185,28 +101,6 @@ func TestValidateUniqueVariants(t *testing.T) {
 				},
 			},
 			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateUniqueVariants(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateUniqueVariants() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateOverrides(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
-		{
-			name: "no overrides",
-			exp:  validExperiment(),
 		},
 		{
 			name: "valid override",
@@ -224,53 +118,6 @@ func TestValidateOverrides(t *testing.T) {
 				Status:    StatusRunning,
 				Variants:  []Variant{{Name: "control", Weight: 50}},
 				Overrides: map[string]string{"user-1": "nonexistent"},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateOverrides(tt.exp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateOverrides() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestExperimentValidate(t *testing.T) {
-	tests := []struct {
-		name    string
-		exp     Experiment
-		wantErr bool
-	}{
-		{
-			name: "valid experiment",
-			exp:  validExperiment(),
-		},
-		{
-			name:    "empty slug",
-			exp:     Experiment{Status: StatusRunning, Variants: []Variant{{Name: "a", Weight: 1}}},
-			wantErr: true,
-		},
-		{
-			name:    "invalid status",
-			exp:     Experiment{Slug: "test", Status: "bad", Variants: []Variant{{Name: "a", Weight: 1}}},
-			wantErr: true,
-		},
-		{
-			name:    "no variants",
-			exp:     Experiment{Slug: "test", Status: StatusRunning},
-			wantErr: true,
-		},
-		{
-			name: "invalid override",
-			exp: Experiment{
-				Slug:      "test",
-				Status:    StatusRunning,
-				Variants:  []Variant{{Name: "a", Weight: 1}},
-				Overrides: map[string]string{"u1": "nonexistent"},
 			},
 			wantErr: true,
 		},

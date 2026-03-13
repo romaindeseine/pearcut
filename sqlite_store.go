@@ -157,6 +157,9 @@ func (s *SQLiteStore) Update(exp Experiment) error {
 	if err := exp.Validate(); err != nil {
 		return err
 	}
+	if exp.Seed == "" {
+		exp.Seed = exp.Slug
+	}
 
 	exp.UpdatedAt = time.Now().UTC()
 

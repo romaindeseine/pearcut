@@ -40,7 +40,7 @@ Flat layout — all Go files at the root in `package main`, one file per respons
 - `model.go` — domain structs (Experiment, Variant, Assignment), Store interfaces (ReadStore, WriteStore, Store), Engine interface
 - `errors.go` — sentinel errors
 - `sqlite_store.go` — SQLite-backed Store implementation
-- `validate.go` — experiment validation functions
+- `validate.go` — validation methods on Experiment
 - `engine.go` — assignment engine (lookup, overrides, hash-based variant selection)
 
 ## Build & Run
