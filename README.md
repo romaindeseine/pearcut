@@ -136,12 +136,24 @@ gcloud run deploy pearcut \
 
 ## How it works
 
-Pearcut hashes `seed + user_id` with MurmurHash3 (32-bit) to produce a deterministic bucket in `[0, total_weight)`.
-The bucket maps to a variant based on cumulative weights.
-Same input always yields the same variant — no database lookup needed for assignment.
-Overrides bypass hashing entirely, forcing a specific variant for a given user.
-The seed defaults to the experiment slug but can be changed to re-shuffle assignments.
+1. Hash `seed + user_id` with MurmurHash3 (32-bit)
+2. Map the hash to a bucket in `[0, total_weight)`
+3. Walk cumulative weights to find the matching variant
+
+```
+seed: "checkout-flow", user_id: "user-42"
+
+MurmurHash3("checkout-flow/user-42") → 2847103 % 100 → 47
+
+  control [0–50)  ← 47 lands here
+  new_checkout [50–100)
+```
+
+Same input always produces the same variant — no database lookup needed.
+
+**Overrides** bypass hashing: a user can be forced into a specific variant.
+**Seed** defaults to the experiment slug but can be changed to re-shuffle all assignments.
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the terms of the [MIT](LICENSE) license.

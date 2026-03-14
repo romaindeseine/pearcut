@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/pearcut"
 )
@@ -43,14 +47,37 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := pearcut.NewServer(*httpAddr, cached, publisher)
+	async := pearcut.NewAsyncPublisher(publisher)
+
+	srv := pearcut.NewServer(*httpAddr, cached, async)
 
 	mux := http.NewServeMux()
 	srv.RegisterRoutes(mux)
 
-	slog.Info("🚀 starting server", "addr", srv.Addr)
-	if err := http.ListenAndServe(srv.Addr, mux); err != nil {
-		slog.Error("❌ server failed", "error", err)
-		os.Exit(1)
+	httpServer := &http.Server{Addr: srv.Addr, Handler: mux}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		slog.Info("🚀 starting server", "addr", srv.Addr)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("❌ server failed", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("⚠️ shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		slog.Error("❌ http shutdown failed", "error", err)
+	}
+
+	if err := async.Close(); err != nil {
+		slog.Error("❌ publisher close failed", "error", err)
 	}
 }
