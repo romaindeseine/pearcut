@@ -15,13 +15,15 @@ func main() {
 
 	httpAddr := flag.String("http", "0.0.0.0:8080", "listen address (host:port)")
 	dbPath := flag.String("db", "pearcut.db", "path to SQLite database")
-	events := flag.String("events", "noop", "event publisher (noop)")
+	events := flag.String("events", "noop", "event publisher (noop, stdout)")
 	flag.Parse()
 
 	var publisher pearcut.EventPublisher
 	switch *events {
 	case "noop":
 		publisher = pearcut.NoopPublisher{}
+	case "stdout":
+		publisher = pearcut.NewStdoutPublisher(os.Stdout)
 	default:
 		slog.Error("❌ unknown events publisher", "events", *events)
 		fmt.Fprintf(os.Stderr, "unknown --events value: %q\n", *events)
