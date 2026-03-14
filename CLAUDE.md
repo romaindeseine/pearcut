@@ -43,7 +43,7 @@ Flat layout — all Go files at the root in `package pearcut`, one file per resp
 - `assign.go` — HTTP handlers for assign and bulk assign endpoints
 - `admin.go` — admin handlers (CRUD experiments under `/admin/v1`)
 - `server.go` — Server struct, NewServer, RegisterRoutes, writeJSON helper, health handler
-- `publisher.go` — NoopPublisher (default EventPublisher implementation)
+- `publisher.go` — NoopPublisher, StdoutPublisher (EventPublisher implementations)
 - `sqlite_store.go` — SQLite-backed Store implementation
 - `cached_store.go` — in-memory cache wrapping a Store (warm-up on startup, reads from cache, writes refresh cache)
 - `cmd/pearcut/main.go` — standalone binary entrypoint
@@ -61,7 +61,7 @@ go build -o pearcut ./cmd/pearcut
 |------|---------|-------------|
 | `--http` | `0.0.0.0:8080` | Listen address (host:port) |
 | `--db` | `pearcut.db` | Path to SQLite database file |
-| `--events` | `noop` | Event publisher (`noop`) |
+| `--events` | `noop` | Event publisher (`noop`, `stdout`) |
 
 ## Tests
 
