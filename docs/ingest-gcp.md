@@ -19,8 +19,6 @@ When your Pearcut container emits a JSON line to stdout, Cloud Run intercepts it
 
 In the Logs Explorer (Cloud Console) or via `gcloud`, use this filter to isolate assignment events:
 
-<!-- TODO: screenshot of Logs Explorer with filter applied -->
-
 ```
 resource.type="cloud_run_revision"
 resource.labels.service_name="your-service"
@@ -111,8 +109,6 @@ OPTIONS (
 ```
 
 ### 5. Query
-
-<!-- TODO: screenshot of BigQuery query results -->
 
 ```sql
 SELECT
