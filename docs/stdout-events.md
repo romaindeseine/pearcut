@@ -5,11 +5,12 @@ When started with `--events=stdout`, Pearcut emits one JSON line to stdout for e
 ## Event format
 
 ```json
-{"user_id":"user-42","experiment":"checkout-flow","variant":"control","timestamp":"2025-01-15T10:30:00Z"}
+{"type":"assignment","user_id":"user-42","experiment":"checkout-flow","variant":"control","timestamp":"2025-01-15T10:30:00Z"}
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `type` | string | Event type (always `"assignment"` for now) |
 | `user_id` | string | The assigned user |
 | `experiment` | string | Experiment slug |
 | `variant` | string | Variant the user was assigned to |
