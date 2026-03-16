@@ -62,7 +62,7 @@ Create a log sink:
 ```bash
 gcloud logging sinks create pearcut-events \
   bigquery.googleapis.com/projects/your-project/datasets/pearcut \
-  --log-filter='resource.type="cloud_run_revision" resource.labels.service_name="pearcut"'
+  --log-filter='resource.type="cloud_run_revision" resource.labels.service_name="pearcut" jsonPayload.type="assignment"'
 ```
 
 <!-- TODO: screenshot of BigQuery query results -->
