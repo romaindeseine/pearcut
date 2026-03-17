@@ -18,6 +18,9 @@ func (e Experiment) Validate() error {
 	if err := e.validateTags(); err != nil {
 		return err
 	}
+	if err := e.validateTargetingRules(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -61,6 +64,24 @@ func (e Experiment) validateTags() error {
 	for _, tag := range e.Tags {
 		if tag == "" {
 			return fmt.Errorf("experiment %q has empty tag", e.Slug)
+		}
+	}
+	return nil
+}
+
+func (e Experiment) validateTargetingRules() error {
+	for i, rule := range e.TargetingRules {
+		if rule.Attribute == "" {
+			return fmt.Errorf("experiment %q targeting rule %d has empty attribute", e.Slug, i)
+		}
+		switch rule.Operator {
+		case OperatorIn, OperatorNotIn:
+			// valid
+		default:
+			return fmt.Errorf("experiment %q targeting rule %d has invalid operator %q", e.Slug, i, rule.Operator)
+		}
+		if len(rule.Values) == 0 {
+			return fmt.Errorf("experiment %q targeting rule %d has empty values", e.Slug, i)
 		}
 	}
 	return nil
