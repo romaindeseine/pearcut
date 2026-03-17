@@ -40,8 +40,9 @@ type Experiment struct {
 	Variants       []Variant         `json:"variants"`
 	Overrides      map[string]string `json:"overrides,omitempty"`
 	Seed           string            `json:"seed,omitempty"`
-	TargetingRules []TargetingRule   `json:"targeting_rules,omitempty"`
-	Description    string            `json:"description,omitempty"`
+	TargetingRules    []TargetingRule   `json:"targeting_rules,omitempty"`
+	TrafficPercentage int               `json:"traffic_percentage,omitempty"`
+	Description       string            `json:"description,omitempty"`
 	Tags           []string          `json:"tags,omitempty"`
 	Owner          string            `json:"owner,omitempty"`
 	Hypothesis     string            `json:"hypothesis,omitempty"`
