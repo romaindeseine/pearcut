@@ -72,7 +72,7 @@ curl -X POST localhost:8080/admin/v1/experiments \
     "targeting_rules": [
       {"attribute": "country", "operator": "in", "values": ["FR", "BE"]}
     ],
-    "traffic_percentage": 20,
+    "exclusion_percentage": 80,
     "description": "Test the new checkout flow",
     "tags": ["checkout", "q1-2026"],
     "owner": "team-growth",

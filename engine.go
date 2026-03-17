@@ -134,8 +134,9 @@ func matchesTargeting(rules []TargetingRule, attributes map[string]string) bool 
 }
 
 func isIncludedByTraffic(exp Experiment, userID string) bool {
+	inclusion := 100 - exp.ExclusionPercentage
 	h := murmur3.Sum32([]byte("_traffic_" + exp.Seed + userID))
-	return h%100 < uint32(exp.TrafficPercentage)
+	return h%100 < uint32(inclusion)
 }
 
 func hashVariant(exp Experiment, userID string) string {

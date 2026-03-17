@@ -106,10 +106,11 @@ func TestSQLiteStoreCreateDuplicate(t *testing.T) {
 
 func TestSQLiteStoreCreateSeedDefault(t *testing.T) {
 	s := newTestSQLiteStore(t)
+
 	exp := Experiment{
-		Slug:     "no-seed",
-		Status:   StatusRunning,
-		Variants: []Variant{{Name: "a", Weight: 1}},
+		Slug:              "no-seed",
+		Status:            StatusRunning,
+		Variants:          []Variant{{Name: "a", Weight: 1}},
 	}
 
 	if err := s.Create(exp); err != nil {
