@@ -21,10 +21,17 @@ type Variant struct {
 	Weight int    `json:"weight"`
 }
 
+type TargetingOperator string
+
+const (
+	OperatorIn    TargetingOperator = "in"
+	OperatorNotIn TargetingOperator = "not_in"
+)
+
 type TargetingRule struct {
-	Attribute string   `json:"attribute"`
-	Operator  string   `json:"operator"`
-	Values    []string `json:"values"`
+	Attribute string            `json:"attribute"`
+	Operator  TargetingOperator `json:"operator"`
+	Values    []string          `json:"values"`
 }
 
 type Experiment struct {
