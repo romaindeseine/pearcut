@@ -106,6 +106,7 @@ func TestSQLiteStoreCreateDuplicate(t *testing.T) {
 
 func TestSQLiteStoreCreateSeedDefault(t *testing.T) {
 	s := newTestSQLiteStore(t)
+
 	exp := Experiment{
 		Slug:     "no-seed",
 		Status:   StatusRunning,

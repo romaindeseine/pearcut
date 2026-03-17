@@ -204,6 +204,53 @@ func TestExperimentValidate(t *testing.T) {
 				Variants: []Variant{{Name: "a", Weight: 1}},
 			},
 		},
+		{
+			name: "valid exclusion_percentage 0 (default, no exclusion)",
+			exp: Experiment{
+				Slug:                "test",
+				Status:              StatusRunning,
+				Variants:            []Variant{{Name: "a", Weight: 1}},
+				ExclusionPercentage: 0,
+			},
+		},
+		{
+			name: "valid exclusion_percentage 50",
+			exp: Experiment{
+				Slug:                "test",
+				Status:              StatusRunning,
+				Variants:            []Variant{{Name: "a", Weight: 1}},
+				ExclusionPercentage: 50,
+			},
+		},
+		{
+			name: "valid exclusion_percentage 100",
+			exp: Experiment{
+				Slug:                "test",
+				Status:              StatusRunning,
+				Variants:            []Variant{{Name: "a", Weight: 1}},
+				ExclusionPercentage: 100,
+			},
+		},
+		{
+			name: "negative exclusion_percentage",
+			exp: Experiment{
+				Slug:                "test",
+				Status:              StatusRunning,
+				Variants:            []Variant{{Name: "a", Weight: 1}},
+				ExclusionPercentage: -1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "exclusion_percentage over 100",
+			exp: Experiment{
+				Slug:                "test",
+				Status:              StatusRunning,
+				Variants:            []Variant{{Name: "a", Weight: 1}},
+				ExclusionPercentage: 101,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

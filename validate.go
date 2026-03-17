@@ -21,6 +21,9 @@ func (e Experiment) Validate() error {
 	if err := e.validateTargetingRules(); err != nil {
 		return err
 	}
+	if err := e.validateExclusionPercentage(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -83,6 +86,13 @@ func (e Experiment) validateTargetingRules() error {
 		if len(rule.Values) == 0 {
 			return fmt.Errorf("experiment %q targeting rule %d has empty values", e.Slug, i)
 		}
+	}
+	return nil
+}
+
+func (e Experiment) validateExclusionPercentage() error {
+	if e.ExclusionPercentage < 0 || e.ExclusionPercentage > 100 {
+		return fmt.Errorf("experiment %q has invalid exclusion_percentage %d (must be 0-100)", e.Slug, e.ExclusionPercentage)
 	}
 	return nil
 }
