@@ -52,7 +52,6 @@ type Experiment struct {
 
 type ExperimentFilter struct {
 	Status *ExperimentStatus
-	Slugs  []string
 	Tags   []string
 	Search string
 }
@@ -69,29 +68,34 @@ type ExperimentListResult struct {
 	Total       int
 }
 
-// Store interfaces
-
-type ReadStore interface {
+type ExperimentStore interface {
 	Get(slug string) (Experiment, error)
 	List(filter ExperimentFilter, opts ListOptions) (ExperimentListResult, error)
-}
-
-type WriteStore interface {
 	Create(exp Experiment) error
 	Update(exp Experiment) error
 	Delete(slug string) error
 }
 
-type Store interface {
-	ReadStore
-	WriteStore
-}
-
-// Engine domain
+// Assign domain
 
 type Assignment struct {
 	Experiment string
 	Variant    string
+}
+
+type AssignReader interface {
+	Get(slug string) (Experiment, error)
+	List(slugs []string, status ExperimentStatus) ([]Experiment, error)
+}
+
+type AssignWriter interface {
+	Set(exp Experiment)
+	Delete(slug string)
+}
+
+type AssignStore interface {
+	AssignReader
+	AssignWriter
 }
 
 type Engine interface {
