@@ -86,7 +86,7 @@ func (s *Server) listExperiments(w http.ResponseWriter, r *http.Request) {
 	opts.Sort = sortCol
 	opts.Order = order
 
-	result, err := s.store.List(filter, opts)
+	result, err := s.experimentStore.List(filter, opts)
 	if err != nil {
 		slog.Error("failed to list experiments", "error", err)
 		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "internal server error"})
@@ -110,7 +110,7 @@ func (s *Server) listExperiments(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getExperiment(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 
-	exp, err := s.store.Get(slug)
+	exp, err := s.experimentStore.Get(slug)
 	if err != nil {
 		if errors.Is(err, ErrExperimentNotFound) {
 			writeJSON(w, http.StatusNotFound, ErrorResponse{Error: "experiment not found"})
@@ -131,7 +131,7 @@ func (s *Server) createExperiment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.store.Create(exp); err != nil {
+	if err := s.experimentStore.Create(exp); err != nil {
 		switch {
 		case errors.Is(err, ErrExperimentExists):
 			writeJSON(w, http.StatusConflict, ErrorResponse{Error: "experiment already exists"})
@@ -142,13 +142,14 @@ func (s *Server) createExperiment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := s.store.Get(exp.Slug)
+	created, err := s.experimentStore.Get(exp.Slug)
 	if err != nil {
 		slog.Error("failed to read back experiment", "slug", exp.Slug, "error", err)
 		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "internal server error"})
 		return
 	}
 
+	s.assignStore.Set(created)
 	writeJSON(w, http.StatusCreated, created)
 }
 
@@ -162,7 +163,7 @@ func (s *Server) updateExperiment(w http.ResponseWriter, r *http.Request) {
 	}
 	exp.Slug = slug
 
-	if err := s.store.Update(exp); err != nil {
+	if err := s.experimentStore.Update(exp); err != nil {
 		switch {
 		case errors.Is(err, ErrExperimentNotFound):
 			writeJSON(w, http.StatusNotFound, ErrorResponse{Error: "experiment not found"})
@@ -173,20 +174,21 @@ func (s *Server) updateExperiment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := s.store.Get(slug)
+	updated, err := s.experimentStore.Get(slug)
 	if err != nil {
 		slog.Error("failed to read back experiment", "slug", slug, "error", err)
 		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "internal server error"})
 		return
 	}
 
+	s.assignStore.Set(updated)
 	writeJSON(w, http.StatusOK, updated)
 }
 
 func (s *Server) deleteExperiment(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 
-	if err := s.store.Delete(slug); err != nil {
+	if err := s.experimentStore.Delete(slug); err != nil {
 		if errors.Is(err, ErrExperimentNotFound) {
 			writeJSON(w, http.StatusNotFound, ErrorResponse{Error: "experiment not found"})
 			return
@@ -196,5 +198,6 @@ func (s *Server) deleteExperiment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.assignStore.Delete(slug)
 	w.WriteHeader(http.StatusNoContent)
 }
